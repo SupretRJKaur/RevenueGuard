@@ -539,3 +539,9 @@ RevenueGuard is a **prototype built using synthetic data**.
 Recovery percentages and transaction outcomes are simulated for demonstration purposes and should not be interpreted as real-world financial performance.
 
 The system is designed to demonstrate how AI classification can be combined with deterministic governance and auditability for revenue recovery workflows.
+
+---
+
+## 🎥 Project Pitch
+
+[▶️ Click here to watch the RevenueGuard demo](YOUR_VIDEO_LINK)
