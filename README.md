@@ -544,4 +544,4 @@ The system is designed to demonstrate how AI classification can be combined with
 
 ## 🎥 Project Pitch
 
-[[▶️ Click here to watch the RevenueGuard demo](https://drive.google.com/file/d/1XOxGi14xcIVC0pqpNbc8cZCzbANwDPak/view?usp=drive_link)])
+[▶️ RevenueGuard pitch](https://drive.google.com/file/d/1XOxGi14xcIVC0pqpNbc8cZCzbANwDPak/view?usp=drive_link)
