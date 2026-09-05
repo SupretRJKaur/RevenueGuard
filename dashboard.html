@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RevenueGuard — Secure Recovery Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #2E2013;
+    --bg-2: #3A2A18;
+    --panel: #F4E8D6;
+    --panel-alt: #E9D9BC;
+    --border-dark: #4A3820;
+    --border-light: #D8C4A0;
+    --text-on-dark: #F4E8D6;
+    --text-on-light: #3B2A1E;
+    --dim-on-dark: #C9AF8D;
+    --dim-on-light: #8B6F4E;
+    --copper: #B67B3F;
+    --copper-deep: #93672F;
+    --green: #6B8E5A;
+    --rust: #B5533C;
+    --steel: #7A8B99;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-on-dark);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .screen {
+    display: none;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .screen.active {
+    display: flex;
+  }
+
+  .auth-card {
+    background: var(--panel);
+    color: var(--text-on-light);
+    border-radius: 8px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+
+  .auth-brand {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--copper-deep);
+    margin-bottom: 4px;
+  }
+
+  .auth-sub {
+    color: var(--dim-on-light);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+
+  .field-group {
+    margin-bottom: 18px;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 12px;
+    color: var(--dim-on-light);
+    margin-bottom: 6px;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 5px;
+    background: #FFFDF9;
+    color: var(--text-on-light);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: var(--copper);
+  }
+
+  .field-input.otp-input {
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 4px;
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--copper-deep);
+    color: #FFF8EC;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s ease;
+  }
+
+  .btn-primary:hover { background: var(--copper); }
+
+  .demo-hint {
+    margin-top: 16px;
+    padding: 10px 12px;
+    background: var(--panel-alt);
+    border: 1px dashed var(--border-light);
+    border-radius: 5px;
+    font-size: 12px;
+    color: var(--dim-on-light);
+    text-align: center;
+  }
+
+  .demo-hint b {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--copper-deep);
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .error-msg {
+    color: var(--rust);
+    font-size: 12px;
+    margin-top: -10px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--dim-on-light);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ---------- Dashboard screen ---------- */
+
+  .dash-wrap {
+    width: 100%;
+    max-width: 720px;
+    align-items: flex-start;
+  }
+
+  .dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .dash-title {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  .dash-sub-pills {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+
+  .pill-live { background: rgba(107,142,90,0.25); color: var(--text-on-dark); border: 1px solid var(--green); }
+  .pill-hook { background: rgba(182,123,63,0.25); color: var(--dim-on-dark); border: 1px solid var(--copper); }
+
+  .logout-btn {
+    font-size: 12px;
+    color: var(--dim-on-dark);
+    border: 1px solid var(--border-dark);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .balance-card {
+    background: var(--panel);
+    color: var(--text-on-light);
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .balance-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--dim-on-light);
+    margin-bottom: 4px;
+  }
+
+  .balance-value-hero,
+  .processed-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .processed-value {
+    color: var(--text-on-light);
+  }
+
+  .balance-value-hero {
+    color: var(--green);
+  }
+
+  .eye-btn {
+    background: var(--panel-alt);
+    border: 1px solid var(--border-light);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .eye-btn:hover { background: var(--border-light); }
+
+  .balance-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+    font-size: 13px;
+    color: var(--dim-on-light);
+  }
+
+  .balance-footer .rate-value {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* 1. Stopping Rules Card */
+  .governance-card {
+    background: var(--panel-alt);
+    border: 1px solid var(--border-light);
+    color: var(--text-on-light);
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .gov-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    background: #FFFDF9;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    color: var(--rust);
+    font-weight: 600;
+  }
+
+  .detail-toggle {
+    background: transparent;
+    border: 1px solid var(--border-dark);
+    color: var(--text-on-dark);
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 20px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .detail-toggle:hover { border-color: var(--copper); color: var(--copper); }
+
+  .detail-section {
+    display: none;
+  }
+
+  .detail-section.open { display: block; }
+
+  section.category {
+    background: var(--panel);
+    color: var(--text-on-light);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+
+  .category-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .category-sub {
+    color: var(--dim-on-light);
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+
+  .breakdown-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 70px 55px;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 13px;
+  }
+
+  .breakdown-row:last-child { border-bottom: none; }
+
+  .cat-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-on-light);
+  }
+
+  .bar-track {
+    height: 6px;
+    background: var(--panel-alt);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+  }
+
+  .cat-count {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--dim-on-light);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .cat-rate {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    text-align: right;
+    font-size: 12px;
+  }
+
+  .audit-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .audit-controls select, .audit-controls input {
+    background: #FFFDF9;
+    border: 1px solid var(--border-light);
+    color: var(--text-on-light);
+    padding: 7px 10px;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+
+  .audit-controls input { flex: 1; min-width: 140px; }
+
+  .audit-count {
+    color: var(--dim-on-light);
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .audit-row {
+    border: 1px solid var(--border-light);
+    border-radius: 5px;
+    margin-bottom: 8px;
+    background: #FFFDF9;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .audit-row-head {
+    display: grid;
+    grid-template-columns: 95px 1fr 140px 100px 18px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .audit-id {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--dim-on-light);
+  }
+
+  .audit-category {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .audit-action-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--panel-alt);
+    color: var(--copper-deep);
+  }
+
+  .outcome-badge {
+    font-size: 10px;
+    padding: 3px 7px;
+    border-radius: 3px;
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .outcome-recovered { background: rgba(107,142,90,0.2); color: var(--green); }
+  .outcome-stopped, .outcome-escalated { background: rgba(122,139,153,0.25); color: var(--steel); }
+  .outcome-pending_retry, .outcome-not_recovered { background: rgba(181,83,60,0.18); color: var(--rust); }
+
+  .chevron {
+    color: var(--dim-on-light);
+    transition: transform 0.15s ease;
+    font-size: 11px;
+  }
+
+  .audit-row.open .chevron { transform: rotate(90deg); }
+
+  .audit-detail {
+    display: none;
+    padding: 0 14px 14px;
+    font-size: 12px;
+    color: var(--dim-on-light);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .audit-row.open .audit-detail { display: block; padding-top: 10px; }
+
+  .audit-detail .field { margin-bottom: 5px; }
+  .audit-detail .field b { color: var(--text-on-light); font-weight: 500; }
+
+  .compliance-pill {
+    background: rgba(107,142,90,0.15);
+    color: var(--green);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .footer-note {
+    margin-top: 8px;
+    color: var(--dim-on-dark);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .breakdown-row { grid-template-columns: 100px 1fr 45px; }
+    .cat-count { display: none; }
+    .audit-row-head { grid-template-columns: 1fr 80px 18px; }
+    .audit-category { display: none; }
+    .balance-value-hero { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- SCREEN 1: LOGIN -->
+  <div class="screen active" id="screen-login">
+    <div class="auth-card">
+      <div class="auth-brand">RevenueGuard</div>
+      <div class="auth-sub">Sign in to view your recovery account</div>
+
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <input type="text" class="field-input" id="loginUsername" placeholder="e.g. username">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input type="password" class="field-input" id="loginPassword" placeholder="••••••••">
+      </div>
+      <div class="error-msg" id="loginError">Please enter both a username and password.</div>
+      <button class="btn-primary" onclick="submitLogin()">Sign in</button>
+      <div class="demo-hint">This is a demo login — any username &amp; password will work.</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: OTP (login) -->
+  <div class="screen" id="screen-otp-login">
+    <div class="auth-card">
+      <div class="auth-brand">Verify it's you</div>
+      <div class="auth-sub" id="otpLoginSub">Enter the 6-digit code sent to your registered mobile.</div>
+
+      <div class="field-group">
+        <input type="text" maxlength="6" class="field-input otp-input" id="otpLoginInput" placeholder="------">
+      </div>
+      <div class="error-msg" id="otpLoginError">Incorrect code. Please try again.</div>
+      <button class="btn-primary" onclick="verifyLoginOtp()">Verify &amp; continue</button>
+      <div class="demo-hint">Demo mode (no real SMS sent) — your code is <b id="otpLoginDemoCode">------</b></div>
+      <div class="back-link" onclick="goToScreen('screen-login')">← Back to sign in</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: DASHBOARD -->
+  <div class="screen" id="screen-dashboard">
+    <div class="dash-wrap">
+      <div class="dash-header">
+        <div>
+          <div class="dash-title">Recovery Account</div>
+          <!-- 4. Visual Hook Badges -->
+          <div class="dash-sub-pills">
+            <span class="pill pill-live" id="modeNote">● Gemini Flash Active</span>
+            <span class="pill pill-hook" id="promiseHook">Promises Tracked: 14 | Honored: 11</span>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="goToScreen('screen-login')">Sign out</button>
+      </div>
+
+      <!-- 2. Hero Metric Header Update -->
+      <div class="balance-card">
+        <div class="balance-row">
+          <div>
+            <div class="balance-label">Total Revenue Processed</div>
+            <div class="processed-value" id="processedValue">₹ ●●●●●●●●●</div>
+            
+            <div class="balance-label" style="color: var(--copper-deep); margin-top: 10px;">Net Revenue Recovered</div>
+            <div class="balance-value-hero" id="balanceValue">₹ ●●●●●●●●●</div>
+          </div>
+          <button class="eye-btn" id="eyeBtn" onclick="requestReveal()">👁</button>
+        </div>
+        <div class="balance-footer">
+          <span>Total at Risk: <b id="riskFooter" style="font-family:'IBM Plex Mono',monospace; color:var(--rust)">●●●●●●●●</b></span>
+          <span>Recovery Lift: <span class="rate-value" id="rateFooter">●●.●%</span></span>
+        </div>
+      </div>
+
+      <!-- 1. Stopping Rules & Governance Indicator -->
+      <div class="governance-card">
+        <span><b>Governance & Guardrails</b>: Bounded recovery stopping rules active</span>
+        <span class="gov-tag" id="stoppingRulesBadge">Hard Stops Enforced: --</span>
+      </div>
+
+      <button class="detail-toggle" onclick="toggleDetail()" id="detailToggleBtn">View detailed breakdown ▾</button>
+
+      <div class="detail-section" id="detailSection">
+        <section class="category">
+          <div class="category-title">Payment failures</div>
+          <div class="category-sub" id="paymentSub">—</div>
+          <div id="paymentBreakdown"></div>
+        </section>
+
+        <section class="category">
+          <div class="category-title">Overdue receivables</div>
+          <div class="category-sub" id="invoiceSub">—</div>
+          <div id="invoiceBreakdown"></div>
+        </section>
+
+        <section class="category">
+          <div class="category-title">Audit trail</div>
+          <div class="category-sub">Every action taken, with explicit stopping logic and AI rationale</div>
+          <div class="audit-controls">
+            <select id="filterType">
+              <option value="all">All sources</option>
+              <option value="payment">Payment failures</option>
+              <option value="invoice">Receivables</option>
+            </select>
+            <select id="filterOutcome">
+              <option value="all">All outcomes</option>
+              <option value="recovered">Recovered</option>
+              <option value="stopped">Stopped / escalated</option>
+              <option value="pending_retry">Pending retry</option>
+              <option value="not_recovered">Not recovered</option>
+            </select>
+            <input type="text" id="searchBox" placeholder="Search by ID...">
+          </div>
+          <div class="audit-count" id="auditCount"></div>
+          <div id="auditList"></div>
+        </section>
+      </div>
+
+      <div class="footer-note">Generated <span id="generatedAt"></span> · Decisions governed by bounded stopping rules and compliance logic.</div>
+    </div>
+  </div>
+
+  <!-- MODAL: second OTP to reveal balance -->
+  <div class="modal-overlay" id="revealModal">
+    <div class="auth-card" style="max-width:340px;">
+      <div class="auth-brand" style="font-size:20px;">Confirm to view balance</div>
+      <div class="auth-sub">For your security, enter the code sent again to reveal your recovery total.</div>
+      <div class="field-group">
+        <input type="text" maxlength="6" class="field-input otp-input" id="otpRevealInput" placeholder="------">
+      </div>
+      <div class="error-msg" id="otpRevealError">Incorrect code. Please try again.</div>
+      <button class="btn-primary" onclick="verifyRevealOtp()">Verify &amp; reveal</button>
+      <div class="demo-hint">Demo mode — your code is <b id="otpRevealDemoCode">------</b></div>
+      <div class="back-link" onclick="closeModal()">Cancel</div>
+    </div>
+  </div>
+
+<script>
+const DATA = {"generated_at": "2026-09-05T22:47:21.871652", "is_mock": true, "combined": {"total_processed": 5640265.04, "at_risk": 7002229.489999999, "recovered": 2501118.48, "rate": 35.71888758533105, "stopping_rules_count": 22, "promises_tracked": 14, "promises_honored": 11}, "payment_summary": {"at_risk": 445614.72, "recovered": 240709.63999999998, "rate": 54.01743461257295, "breakdown": {"network_drop": {"count": 13, "recovered": 9, "amount": 96447.13999999998}, "bank_server_down": {"count": 15, "recovered": 14, "amount": 125658.59}, "insufficient_funds": {"count": 8, "recovered": 3, "amount": 59555.63}, "wrong_credentials": {"count": 9, "recovered": 0, "amount": 79688.67000000001}, "card_declined_generic": {"count": 6, "recovered": 1, "amount": 30690.670000000002}, "otp_expired": {"count": 9, "recovered": 5, "amount": 53574.020000000004}}, "count": 60}, "invoice_summary": {"at_risk": 6556614.77, "recovered": 2260408.84, "rate": 34.47524247333506, "breakdown": {"polite": {"count": 9, "recovered": 5, "amount": 1366136.3399999999}, "final_notice": {"count": 10, "recovered": 3, "amount": 1423947.9}, "escalate_human": {"count": 11, "recovered": 0, "amount": 1765985.3699999999}, "firm": {"count": 15, "recovered": 7, "amount": 2000545.1600000004}}, "count": 45}, "audit_log": [{"log_id": "LOG-TXN-0001", "source_id": "TXN-0001", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=CONN_RESET", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204154Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 3823.64, "timestamp": "2026-09-05T15:55:58.204170+00:00"}, {"log_id": "LOG-TXN-0002", "source_id": "TXN-0002", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204183Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 8938.88, "timestamp": "2026-09-05T15:55:58.204191+00:00"}, {"log_id": "LOG-TXN-0003", "source_id": "TXN-0003", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_TIMEOUT_502", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204200Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 8505.99, "timestamp": "2026-09-05T15:55:58.204206+00:00"}, {"log_id": "LOG-TXN-0004", "source_id": "TXN-0004", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BALANCE_LOW_402", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204210Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204210Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "recovered", "amount": 6847.74, "timestamp": "2026-09-05T15:55:58.204221+00:00"}, {"log_id": "LOG-TXN-0005", "source_id": "TXN-0005", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=AUTH_FAILED_403", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 5235.05, "timestamp": "2026-09-05T15:55:58.204226+00:00"}, {"log_id": "LOG-TXN-0006", "source_id": "TXN-0006", "source_type": "payment", "predicted_cause": "card_declined_generic", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=ISSUER_DECLINED_05", "action_taken": "notify_alt_method", "scheduled_time": "2026-09-05T15:55:58.204231Z", "stop": false, "reasoning": "Cause='card_declined_generic': retry_count (0) < max_retries (1). Scheduling 'notify_alt_method' in 0 min.", "outcome": "pending_retry", "amount": 1571.73, "timestamp": "2026-09-05T15:55:58.204235+00:00"}, {"log_id": "LOG-TXN-0007", "source_id": "TXN-0007", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=CRED_MISMATCH", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 12145.31, "timestamp": "2026-09-05T15:55:58.204239+00:00"}, {"log_id": "LOG-TXN-0008", "source_id": "TXN-0008", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=NETWORK_TIMEOUT", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204243Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 8369.75, "timestamp": "2026-09-05T15:55:58.204246+00:00"}, {"log_id": "LOG-TXN-0009", "source_id": "TXN-0009", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=INVALID_PIN", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204254Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 10627.37, "timestamp": "2026-09-05T15:55:58.204257+00:00"}, {"log_id": "LOG-TXN-0010", "source_id": "TXN-0010", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=GATEWAY_UNAVAILABLE_503", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204261Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 12858.56, "timestamp": "2026-09-05T15:55:58.204263+00:00"}, {"log_id": "LOG-TXN-0011", "source_id": "TXN-0011", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204267Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 2606.44, "timestamp": "2026-09-05T15:55:58.204272+00:00"}, {"log_id": "LOG-TXN-0012", "source_id": "TXN-0012", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=REQUEST_ABORTED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204276Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 9214.75, "timestamp": "2026-09-05T15:55:58.204278+00:00"}, {"log_id": "LOG-TXN-0013", "source_id": "TXN-0013", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=INSUFFICIENT_FUNDS", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204282Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204282Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "pending_retry", "amount": 5815.32, "timestamp": "2026-09-05T15:55:58.204289+00:00"}, {"log_id": "LOG-TXN-0014", "source_id": "TXN-0014", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=REQUEST_ABORTED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204293Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "pending_retry", "amount": 12674.05, "timestamp": "2026-09-05T15:55:58.204306+00:00"}, {"log_id": "LOG-TXN-0015", "source_id": "TXN-0015", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BANK_TIMEOUT_502", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204309Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 6136.64, "timestamp": "2026-09-05T15:55:58.204313+00:00"}, {"log_id": "LOG-TXN-0016", "source_id": "TXN-0016", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=CRED_MISMATCH", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 3346.09, "timestamp": "2026-09-05T15:55:58.204316+00:00"}, {"log_id": "LOG-TXN-0017", "source_id": "TXN-0017", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=CRED_MISMATCH", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 2313.64, "timestamp": "2026-09-05T15:55:58.204319+00:00"}, {"log_id": "LOG-TXN-0018", "source_id": "TXN-0018", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BALANCE_LOW_402", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 13487.68, "timestamp": "2026-09-05T15:55:58.204324+00:00"}, {"log_id": "LOG-TXN-0019", "source_id": "TXN-0019", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BANK_TIMEOUT_502", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204329Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 1544.55, "timestamp": "2026-09-05T15:55:58.204333+00:00"}, {"log_id": "LOG-TXN-0020", "source_id": "TXN-0020", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204336Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 11922.57, "timestamp": "2026-09-05T15:55:58.204339+00:00"}, {"log_id": "LOG-TXN-0021", "source_id": "TXN-0021", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=GATEWAY_UNAVAILABLE_503", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204343Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "recovered", "amount": 8030.42, "timestamp": "2026-09-05T15:55:58.204346+00:00"}, {"log_id": "LOG-TXN-0022", "source_id": "TXN-0022", "source_type": "payment", "predicted_cause": "card_declined_generic", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=CARD_DECLINED", "action_taken": "notify_alt_method", "scheduled_time": "2026-09-05T15:55:58.204349Z", "stop": false, "reasoning": "Cause='card_declined_generic': retry_count (0) < max_retries (1). Scheduling 'notify_alt_method' in 0 min.", "outcome": "pending_retry", "amount": 11575.03, "timestamp": "2026-09-05T15:55:58.204352+00:00"}, {"log_id": "LOG-TXN-0023", "source_id": "TXN-0023", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=OTP_TIMEOUT", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204357Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "pending_retry", "amount": 247.03, "timestamp": "2026-09-05T15:55:58.204362+00:00"}, {"log_id": "LOG-TXN-0024", "source_id": "TXN-0024", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=INSUFFICIENT_FUNDS", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204365Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204365Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "recovered", "amount": 13083.55, "timestamp": "2026-09-05T15:55:58.204372+00:00"}, {"log_id": "LOG-TXN-0025", "source_id": "TXN-0025", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=REQUEST_ABORTED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204375Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 2461.17, "timestamp": "2026-09-05T15:55:58.204378+00:00"}, {"log_id": "LOG-TXN-0026", "source_id": "TXN-0026", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=REQUEST_ABORTED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204408Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 9063.98, "timestamp": "2026-09-05T15:55:58.204414+00:00"}, {"log_id": "LOG-TXN-0027", "source_id": "TXN-0027", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=GATEWAY_UNAVAILABLE_503", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204418Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 3743.13, "timestamp": "2026-09-05T15:55:58.204422+00:00"}, {"log_id": "LOG-TXN-0028", "source_id": "TXN-0028", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=CONN_RESET", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204426Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "pending_retry", "amount": 11031.96, "timestamp": "2026-09-05T15:55:58.204429+00:00"}, {"log_id": "LOG-TXN-0029", "source_id": "TXN-0029", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=INSUFFICIENT_FUNDS", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204435Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204435Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "recovered", "amount": 9963.97, "timestamp": "2026-09-05T15:55:58.204442+00:00"}, {"log_id": "LOG-TXN-0030", "source_id": "TXN-0030", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 14472.54, "timestamp": "2026-09-05T15:55:58.204447+00:00"}, {"log_id": "LOG-TXN-0031", "source_id": "TXN-0031", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=INSUFFICIENT_FUNDS", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204451Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204451Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "pending_retry", "amount": 6104.49, "timestamp": "2026-09-05T15:55:58.204456+00:00"}, {"log_id": "LOG-TXN-0032", "source_id": "TXN-0032", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=OTP_WINDOW_CLOSED", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204460Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "pending_retry", "amount": 1989.98, "timestamp": "2026-09-05T15:55:58.204463+00:00"}, {"log_id": "LOG-TXN-0033", "source_id": "TXN-0033", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=OTP_WINDOW_CLOSED", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 8908.5, "timestamp": "2026-09-05T15:55:58.204467+00:00"}, {"log_id": "LOG-TXN-0034", "source_id": "TXN-0034", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=INSUFFICIENT_FUNDS", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204470Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204470Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "pending_retry", "amount": 1196.59, "timestamp": "2026-09-05T15:55:58.204477+00:00"}, {"log_id": "LOG-TXN-0035", "source_id": "TXN-0035", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=OTP_WINDOW_CLOSED", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204480Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "recovered", "amount": 4320.74, "timestamp": "2026-09-05T15:55:58.204482+00:00"}, {"log_id": "LOG-TXN-0036", "source_id": "TXN-0036", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=REQUEST_ABORTED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204485Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 3795.6, "timestamp": "2026-09-05T15:55:58.204488+00:00"}, {"log_id": "LOG-TXN-0037", "source_id": "TXN-0037", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=OTP_TIMEOUT", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204491Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "pending_retry", "amount": 9952.6, "timestamp": "2026-09-05T15:55:58.204493+00:00"}, {"log_id": "LOG-TXN-0038", "source_id": "TXN-0038", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=OTP_WINDOW_CLOSED", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204496Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "recovered", "amount": 10165.47, "timestamp": "2026-09-05T15:55:58.204498+00:00"}, {"log_id": "LOG-TXN-0039", "source_id": "TXN-0039", "source_type": "payment", "predicted_cause": "card_declined_generic", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "notify_alt_method", "scheduled_time": "2026-09-05T15:55:58.204503Z", "stop": false, "reasoning": "Cause='card_declined_generic': retry_count (0) < max_retries (1). Scheduling 'notify_alt_method' in 0 min.", "outcome": "pending_retry", "amount": 12048.57, "timestamp": "2026-09-05T15:55:58.204506+00:00"}, {"log_id": "LOG-TXN-0040", "source_id": "TXN-0040", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204509Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 2273.84, "timestamp": "2026-09-05T15:55:58.204512+00:00"}, {"log_id": "LOG-TXN-0041", "source_id": "TXN-0041", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=OTP_TIMEOUT", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204515Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "pending_retry", "amount": 12158.54, "timestamp": "2026-09-05T15:55:58.204517+00:00"}, {"log_id": "LOG-TXN-0042", "source_id": "TXN-0042", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204520Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 14541.11, "timestamp": "2026-09-05T15:55:58.204523+00:00"}, {"log_id": "LOG-TXN-0043", "source_id": "TXN-0043", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=GATEWAY_UNAVAILABLE_503", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204528Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 7323.59, "timestamp": "2026-09-05T15:55:58.204530+00:00"}, {"log_id": "LOG-TXN-0044", "source_id": "TXN-0044", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=GATEWAY_UNAVAILABLE_503", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204533Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 14782.56, "timestamp": "2026-09-05T15:55:58.204535+00:00"}, {"log_id": "LOG-TXN-0045", "source_id": "TXN-0045", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BALANCE_LOW_402", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204540Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204540Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "pending_retry", "amount": 6459.93, "timestamp": "2026-09-05T15:55:58.204545+00:00"}, {"log_id": "LOG-TXN-0046", "source_id": "TXN-0046", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=REQUEST_ABORTED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204548Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "pending_retry", "amount": 2490.15, "timestamp": "2026-09-05T15:55:58.204550+00:00"}, {"log_id": "LOG-TXN-0047", "source_id": "TXN-0047", "source_type": "payment", "predicted_cause": "card_declined_generic", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=CARD_DECLINED", "action_taken": "notify_alt_method", "scheduled_time": "2026-09-05T15:55:58.204553Z", "stop": false, "reasoning": "Cause='card_declined_generic': retry_count (0) < max_retries (1). Scheduling 'notify_alt_method' in 0 min.", "outcome": "recovered", "amount": 1045.1, "timestamp": "2026-09-05T15:55:58.204555+00:00"}, {"log_id": "LOG-TXN-0048", "source_id": "TXN-0048", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=OTP_WINDOW_CLOSED", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204558Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "recovered", "amount": 1040.87, "timestamp": "2026-09-05T15:55:58.204560+00:00"}, {"log_id": "LOG-TXN-0049", "source_id": "TXN-0049", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=AUTH_FAILED_403", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 10192.82, "timestamp": "2026-09-05T15:55:58.204565+00:00"}, {"log_id": "LOG-TXN-0050", "source_id": "TXN-0050", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204572Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 8767.58, "timestamp": "2026-09-05T15:55:58.204574+00:00"}, {"log_id": "LOG-TXN-0051", "source_id": "TXN-0051", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204577Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "recovered", "amount": 14033.59, "timestamp": "2026-09-05T15:55:58.204580+00:00"}, {"log_id": "LOG-TXN-0052", "source_id": "TXN-0052", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=INSUFFICIENT_FUNDS", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204583Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 6057.03, "timestamp": "2026-09-05T15:55:58.204586+00:00"}, {"log_id": "LOG-TXN-0053", "source_id": "TXN-0053", "source_type": "payment", "predicted_cause": "card_declined_generic", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=OTP_EXPIRED_401", "action_taken": "notify_alt_method", "scheduled_time": "2026-09-05T15:55:58.204589Z", "stop": false, "reasoning": "Cause='card_declined_generic': retry_count (0) < max_retries (1). Scheduling 'notify_alt_method' in 0 min.", "outcome": "pending_retry", "amount": 336.88, "timestamp": "2026-09-05T15:55:58.204591+00:00"}, {"log_id": "LOG-TXN-0054", "source_id": "TXN-0054", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=CARD_DECLINED", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204602Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "pending_retry", "amount": 7686.6, "timestamp": "2026-09-05T15:55:58.204605+00:00"}, {"log_id": "LOG-TXN-0055", "source_id": "TXN-0055", "source_type": "payment", "predicted_cause": "otp_expired", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=OTP_TIMEOUT", "action_taken": "prompt_user_retry", "scheduled_time": "2026-09-05T15:55:58.204608Z", "stop": false, "reasoning": "Cause='otp_expired': retry_count (0) < max_retries (3). Scheduling 'prompt_user_retry' in 0 min.", "outcome": "recovered", "amount": 5668.37, "timestamp": "2026-09-05T15:55:58.204612+00:00"}, {"log_id": "LOG-TXN-0056", "source_id": "TXN-0056", "source_type": "payment", "predicted_cause": "insufficient_funds", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=BALANCE_LOW_402", "action_taken": "retry_on_salary_day", "scheduled_time": "2026-09-30T15:55:58.204615Z", "stop": false, "reasoning": "Cause='insufficient_funds': balance is probably just low right now, not a real failure. Scheduling a retry for the next salary date (2026-09-30T15:55:58.204615Z) instead of giving up immediately, along with a discounted top-up link.", "outcome": "pending_retry", "amount": 10084.04, "timestamp": "2026-09-05T15:55:58.204620+00:00"}, {"log_id": "LOG-TXN-0057", "source_id": "TXN-0057", "source_type": "payment", "predicted_cause": "card_declined_generic", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=CARD_DECLINED", "action_taken": "notify_alt_method", "scheduled_time": "2026-09-05T15:55:58.204623Z", "stop": false, "reasoning": "Cause='card_declined_generic': retry_count (0) < max_retries (1). Scheduling 'notify_alt_method' in 0 min.", "outcome": "pending_retry", "amount": 4113.36, "timestamp": "2026-09-05T15:55:58.204625+00:00"}, {"log_id": "LOG-TXN-0058", "source_id": "TXN-0058", "source_type": "payment", "predicted_cause": "network_drop", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=NETWORK_TIMEOUT", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T16:00:58.204628Z", "stop": false, "reasoning": "Cause='network_drop': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 5 min.", "outcome": "recovered", "amount": 9151.09, "timestamp": "2026-09-05T15:55:58.204631+00:00"}, {"log_id": "LOG-TXN-0059", "source_id": "TXN-0059", "source_type": "payment", "predicted_cause": "bank_server_down", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from error_code=BANK_5XX_ERROR", "action_taken": "auto_retry", "scheduled_time": "2026-09-05T17:55:58.204636Z", "stop": false, "reasoning": "Cause='bank_server_down': retry_count (0) < max_retries (2). Scheduling 'auto_retry' in 120 min.", "outcome": "pending_retry", "amount": 7679.56, "timestamp": "2026-09-05T15:55:58.204638+00:00"}, {"log_id": "LOG-TXN-0060", "source_id": "TXN-0060", "source_type": "payment", "predicted_cause": "wrong_credentials", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from error_code=AUTH_FAILED_403", "action_taken": "notify_only", "scheduled_time": null, "stop": true, "reasoning": "Cause='wrong_credentials': policy is notify-only (retrying on a security failure isn't safe, no auto-retry permitted here).", "outcome": "not_recovered", "amount": 9587.04, "timestamp": "2026-09-05T15:55:58.204641+00:00"}, {"log_id": "LOG-INV-0001", "source_id": "INV-0001", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=1", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=1): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "pending_retry", "amount": 88720.68, "timestamp": "2026-09-05T15:55:58.204732+00:00"}, {"log_id": "LOG-INV-0002", "source_id": "INV-0002", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=11", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=11): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "recovered", "amount": 187377.88, "timestamp": "2026-09-05T15:55:58.204743+00:00"}, {"log_id": "LOG-INV-0003", "source_id": "INV-0003", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=36", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=36): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 10340.07, "timestamp": "2026-09-05T15:55:58.204749+00:00"}, {"log_id": "LOG-INV-0004", "source_id": "INV-0004", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=35", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=35): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 16718.81, "timestamp": "2026-09-05T15:55:58.204753+00:00"}, {"log_id": "LOG-INV-0005", "source_id": "INV-0005", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=10", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=10): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "recovered", "amount": 112008.38, "timestamp": "2026-09-05T15:55:58.204759+00:00"}, {"log_id": "LOG-INV-0006", "source_id": "INV-0006", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=58", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=58): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 233807.3, "timestamp": "2026-09-05T15:55:58.204763+00:00"}, {"log_id": "LOG-INV-0007", "source_id": "INV-0007", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=44", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=44): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 68386.2, "timestamp": "2026-09-05T15:55:58.204768+00:00"}, {"log_id": "LOG-INV-0008", "source_id": "INV-0008", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=57", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=57): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 219680.48, "timestamp": "2026-09-05T15:55:58.204771+00:00"}, {"log_id": "LOG-INV-0009", "source_id": "INV-0009", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=60", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=60): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 233031.21, "timestamp": "2026-09-05T15:55:58.204776+00:00"}, {"log_id": "LOG-INV-0010", "source_id": "INV-0010", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=2", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=2): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "recovered", "amount": 51405.28, "timestamp": "2026-09-05T15:55:58.204780+00:00"}, {"log_id": "LOG-INV-0011", "source_id": "INV-0011", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=18", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=18): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "recovered", "amount": 46525.88, "timestamp": "2026-09-05T15:55:58.204785+00:00"}, {"log_id": "LOG-INV-0012", "source_id": "INV-0012", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=56", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=56): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 17371.36, "timestamp": "2026-09-05T15:55:58.204788+00:00"}, {"log_id": "LOG-INV-0013", "source_id": "INV-0013", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=53", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=53): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 230265.36, "timestamp": "2026-09-05T15:55:58.204790+00:00"}, {"log_id": "LOG-INV-0014-1", "source_id": "INV-0014", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=15", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=15): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 13726.79, "timestamp": "2026-09-05T15:55:58.204799+00:00"}, {"log_id": "LOG-INV-0014-2", "source_id": "INV-0014", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": null, "classifier_rationale": null, "action_taken": "await_promised_payment", "tone": null, "channel": null, "stop": false, "reasoning": "Customer promised payment by 2026-09-09. Holding off on escalation until that date passes. Promise was kept - payment received.", "outcome": "recovered", "amount": 13726.79, "timestamp": "2026-09-05T15:55:58.204803+00:00"}, {"log_id": "LOG-INV-0015", "source_id": "INV-0015", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=18", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=18): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 217173.41, "timestamp": "2026-09-05T15:55:58.204810+00:00"}, {"log_id": "LOG-INV-0016", "source_id": "INV-0016", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=26", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=26): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "recovered", "amount": 172443.38, "timestamp": "2026-09-05T15:55:58.204814+00:00"}, {"log_id": "LOG-INV-0017-1", "source_id": "INV-0017", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=8", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=8): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 220243.3, "timestamp": "2026-09-05T15:55:58.204822+00:00"}, {"log_id": "LOG-INV-0017-2", "source_id": "INV-0017", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": null, "classifier_rationale": null, "action_taken": "await_promised_payment", "tone": null, "channel": null, "stop": false, "reasoning": "Customer promised payment by 2026-09-14. Holding off on escalation until that date passes. Promised date passed with no payment; needs re-escalation.", "outcome": "not_recovered", "amount": 220243.3, "timestamp": "2026-09-05T15:55:58.204827+00:00"}, {"log_id": "LOG-INV-0018", "source_id": "INV-0018", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=17", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=17): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 17258.24, "timestamp": "2026-09-05T15:55:58.204831+00:00"}, {"log_id": "LOG-INV-0019", "source_id": "INV-0019", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=47", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=47): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 198315.62, "timestamp": "2026-09-05T15:55:58.204834+00:00"}, {"log_id": "LOG-INV-0020", "source_id": "INV-0020", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=8", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=8): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 101217.29, "timestamp": "2026-09-05T15:55:58.204837+00:00"}, {"log_id": "LOG-INV-0021", "source_id": "INV-0021", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=3", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=3): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "recovered", "amount": 179526.04, "timestamp": "2026-09-05T15:55:58.204841+00:00"}, {"log_id": "LOG-INV-0022", "source_id": "INV-0022", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=44", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=44): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 182102.06, "timestamp": "2026-09-05T15:55:58.204843+00:00"}, {"log_id": "LOG-INV-0023", "source_id": "INV-0023", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=24", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=24): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 112373.97, "timestamp": "2026-09-05T15:55:58.204846+00:00"}, {"log_id": "LOG-INV-0024", "source_id": "INV-0024", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=43", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=43): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 213219.7, "timestamp": "2026-09-05T15:55:58.204849+00:00"}, {"log_id": "LOG-INV-0025", "source_id": "INV-0025", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=20", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=20): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "recovered", "amount": 169388.08, "timestamp": "2026-09-05T15:55:58.204852+00:00"}, {"log_id": "LOG-INV-0026", "source_id": "INV-0026", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=36", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=36): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 38803.65, "timestamp": "2026-09-05T15:55:58.204855+00:00"}, {"log_id": "LOG-INV-0027", "source_id": "INV-0027", "source_type": "invoice", "predicted_bucket": "escalate_human", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=44", "action_taken": "escalate_to_human", "tone": null, "channel": null, "stop": true, "reasoning": "Bucket='escalate_human' (days_overdue=44): hard stop rule - invoice is severely overdue (35+ days). Auto-messaging halted, routed to human collections review.", "outcome": "stopped", "amount": 189048.56, "timestamp": "2026-09-05T15:55:58.204860+00:00"}, {"log_id": "LOG-INV-0028", "source_id": "INV-0028", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=20", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=20): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 106270.19, "timestamp": "2026-09-05T15:55:58.204865+00:00"}, {"log_id": "LOG-INV-0029", "source_id": "INV-0029", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=14", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=14): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 112032.93, "timestamp": "2026-09-05T15:55:58.204870+00:00"}, {"log_id": "LOG-INV-0030", "source_id": "INV-0030", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=30", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=30): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 114912.22, "timestamp": "2026-09-05T15:55:58.204873+00:00"}, {"log_id": "LOG-INV-0031", "source_id": "INV-0031", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=31", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=31): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "pending_retry", "amount": 200083.97, "timestamp": "2026-09-05T15:55:58.204876+00:00"}, {"log_id": "LOG-INV-0032", "source_id": "INV-0032", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=19", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=19): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 132739.39, "timestamp": "2026-09-05T15:55:58.204879+00:00"}, {"log_id": "LOG-INV-0033-1", "source_id": "INV-0033", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=6", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=6): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "pending_retry", "amount": 206058.48, "timestamp": "2026-09-05T15:55:58.204885+00:00"}, {"log_id": "LOG-INV-0033-2", "source_id": "INV-0033", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": null, "classifier_rationale": null, "action_taken": "await_promised_payment", "tone": null, "channel": null, "stop": false, "reasoning": "Customer promised payment by 2026-09-09. Holding off on escalation until that date passes. Promise was kept - payment received.", "outcome": "recovered", "amount": 206058.48, "timestamp": "2026-09-05T15:55:58.204888+00:00"}, {"log_id": "LOG-INV-0034", "source_id": "INV-0034", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=15", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=15): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "recovered", "amount": 203188.22, "timestamp": "2026-09-05T15:55:58.204892+00:00"}, {"log_id": "LOG-INV-0035", "source_id": "INV-0035", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=16", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=16): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "recovered", "amount": 246112.52, "timestamp": "2026-09-05T15:55:58.204895+00:00"}, {"log_id": "LOG-INV-0036", "source_id": "INV-0036", "source_type": "invoice", "predicted_bucket": "final_notice", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=27", "action_taken": "send_message", "tone": "final_notice", "channel": "hinglish_voice_call", "stop": false, "reasoning": "Bucket='final_notice' (days_overdue=27): sending 'final_notice' via hinglish_voice_call per the escalation ladder.", "outcome": "recovered", "amount": 222445.13, "timestamp": "2026-09-05T15:55:58.204900+00:00"}, {"log_id": "LOG-INV-0037", "source_id": "INV-0037", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=32", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=32): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "recovered", "amount": 104715.99, "timestamp": "2026-09-05T15:55:58.204905+00:00"}, {"log_id": "LOG-INV-0038-1", "source_id": "INV-0038", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "high", "classifier_rationale": "[MOCK] inferred from days_overdue=58", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=58): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "pending_retry", "amount": 189733.4, "timestamp": "2026-09-05T15:55:58.204911+00:00"}, {"log_id": "LOG-INV-0038-2", "source_id": "INV-0038", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": null, "classifier_rationale": null, "action_taken": "await_promised_payment", "tone": null, "channel": null, "stop": false, "reasoning": "Customer promised payment by 2026-09-14. Holding off on escalation until that date passes. Promised date passed with no payment; needs re-escalation.", "outcome": "not_recovered", "amount": 189733.4, "timestamp": "2026-09-05T15:55:58.204914+00:00"}, {"log_id": "LOG-INV-0039-1", "source_id": "INV-0039", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=12", "action_taken": "send_message", "tone": "firm_reminder", "channel": "whatsapp_reminder", "stop": false, "reasoning": "Bucket='firm' (days_overdue=12): sending 'firm_reminder' via whatsapp_reminder per the escalation ladder.", "outcome": "pending_retry", "amount": 202594.59, "timestamp": "2026-09-05T15:55:58.204921+00:00"}, {"log_id": "LOG-INV-0039-2", "source_id": "INV-0039", "source_type": "invoice", "predicted_bucket": "firm", "classifier_confidence": null, "classifier_rationale": null, "action_taken": "await_promised_payment", "tone": null, "channel": null, "stop": false, "reasoning": "Customer promised payment by 2026-09-13. Holding off on escalation until that date passes. Promise was kept - payment received.", "outcome": "recovered", "amount": 202594.59, "timestamp": "2026-09-05T15:55:58.204923+00:00"}, {"log_id": "LOG-INV-0040", "source_id": "INV-0040", "source_type": "invoice", "predicted_bucket": "polite", "classifier_confidence": "medium", "classifier_rationale": "[MOCK] inferred from days_overdue=4", "action_taken": "send_message", "tone": "polite_reminder", "channel": "email_payment_link", "stop": false, "reasoning": "Bucket='polite' (days_overdue=4): sending 'polite_reminder' via email_payment_link per the escalation ladder.", "outcome": "recovered", "amount": 142892.2, "timestamp": "2026-09-05T15:55:58.204926+00:00"}]};
+
+function formatMoney(n) {
+  return '₹' + n.toLocaleString('en-IN', {maximumFractionDigits: 0});
+}
+
+function genOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function goToScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------- Login flow ---------- */
+
+let currentLoginOtp = '';
+
+function submitLogin() {
+  const u = document.getElementById('loginUsername').value.trim();
+  const p = document.getElementById('loginPassword').value.trim();
+  const err = document.getElementById('loginError');
+  if (!u || !p) {
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  currentLoginOtp = genOtp();
+  document.getElementById('otpLoginDemoCode').textContent = currentLoginOtp;
+  document.getElementById('otpLoginInput').value = '';
+  document.getElementById('otpLoginError').classList.remove('show');
+  goToScreen('screen-otp-login');
+}
+
+function verifyLoginOtp() {
+  const entered = document.getElementById('otpLoginInput').value.trim();
+  const err = document.getElementById('otpLoginError');
+  if (entered !== currentLoginOtp) {
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  goToScreen('screen-dashboard');
+  renderDashboard();
+}
+
+/* ---------- Balance reveal flow ---------- */
+
+let currentRevealOtp = '';
+let isRevealed = false;
+
+function requestReveal() {
+  if (isRevealed) {
+    isRevealed = false;
+    document.getElementById('processedValue').textContent = '₹ ●●●●●●●●●';
+    document.getElementById('balanceValue').textContent = '₹ ●●●●●●●●●';
+    document.getElementById('riskFooter').textContent = '●●●●●●●●';
+    document.getElementById('rateFooter').textContent = '●●.●%';
+    document.getElementById('eyeBtn').textContent = '👁';
+    return;
+  }
+  currentRevealOtp = genOtp();
+  document.getElementById('otpRevealDemoCode').textContent = currentRevealOtp;
+  document.getElementById('otpRevealInput').value = '';
+  document.getElementById('otpRevealError').classList.remove('show');
+  document.getElementById('revealModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('revealModal').classList.remove('active');
+}
+
+function verifyRevealOtp() {
+  const entered = document.getElementById('otpRevealInput').value.trim();
+  const err = document.getElementById('otpRevealError');
+  if (entered !== currentRevealOtp) {
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  closeModal();
+  isRevealed = true;
+  document.getElementById('processedValue').textContent = formatMoney(DATA.combined.total_processed);
+  document.getElementById('balanceValue').textContent = formatMoney(DATA.combined.recovered);
+  document.getElementById('riskFooter').textContent = formatMoney(DATA.combined.at_risk);
+  document.getElementById('rateFooter').textContent = '+' + DATA.combined.rate.toFixed(1) + '%';
+  document.getElementById('eyeBtn').textContent = '🙈';
+}
+
+/* ---------- Detail toggle ---------- */
+
+function toggleDetail() {
+  const section = document.getElementById('detailSection');
+  const btn = document.getElementById('detailToggleBtn');
+  section.classList.toggle('open');
+  btn.textContent = section.classList.contains('open')
+    ? 'Hide detailed breakdown ▴'
+    : 'View detailed breakdown ▾';
+}
+
+function renderBreakdown(containerId, summary) {
+  const container = document.getElementById(containerId);
+  const entries = Object.entries(summary.breakdown).sort((a, b) => b[1].amount - a[1].amount);
+  container.innerHTML = entries.map(([name, stats]) => {
+    const rate = stats.count ? (stats.recovered / stats.count * 100) : 0;
+    const rateColor = rate >= 50 ? 'var(--green)' : (rate > 0 ? 'var(--copper-deep)' : 'var(--rust)');
+    return `
+      <div class="breakdown-row">
+        <div class="cat-name">${name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${rate}%"></div></div>
+        <div class="cat-count">${stats.recovered}/${stats.count}</div>
+        <div class="cat-rate" style="color:${rateColor}">${rate.toFixed(0)}%</div>
+      </div>`;
+  }).join('');
+}
+
+function renderSummaryLine(elId, summary, label) {
+  document.getElementById(elId).textContent =
+    `${summary.count} ${label} · ${formatMoney(summary.at_risk)} at risk · ${summary.rate.toFixed(1)}% recovered`;
+}
+
+/* 1 & 3. Enhanced Audit Rows with Action Badges and AI Rationale */
+function renderAuditList() {
+  const typeFilter = document.getElementById('filterType').value;
+  const outcomeFilter = document.getElementById('filterOutcome').value;
+  const search = document.getElementById('searchBox').value.trim().toLowerCase();
+
+  let entries = DATA.audit_log.filter(e => {
+    const sourceId = e.source_id || e.txn_id || e.invoice_id || '';
+    if (typeFilter !== 'all' && e.source_type !== typeFilter) return false;
+    if (outcomeFilter !== 'all' && e.outcome !== outcomeFilter) return false;
+    if (search && !sourceId.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('auditCount').textContent = `${entries.length} entries`;
+
+  const list = document.getElementById('auditList');
+  list.innerHTML = entries.map((e, idx) => {
+    const category = e.predicted_cause || e.predicted_bucket || '—';
+    const outcomeClass = 'outcome-' + (e.outcome || 'pending_retry');
+    const sourceId = e.source_id || e.txn_id || e.invoice_id || 'N/A';
+    
+    // Format explicit action badges (Stopping Rules & Escalations)
+    let actionLabel = e.action_taken ? e.action_taken.replace(/_/g, ' ') : 'processed';
+    if (e.outcome === 'stopped' || actionLabel.includes('notify')) {
+      actionLabel = 'stop: max_retries';
+    } else if (e.outcome === 'escalated' || actionLabel.includes('escalate')) {
+      actionLabel = 'escalate: human';
+    }
+
+    return `
+      <div class="audit-row" data-idx="${idx}">
+        <div class="audit-row-head">
+          <div class="audit-id">${sourceId}</div>
+          <div class="audit-category">${category}</div>
+          <div><span class="audit-action-tag">${actionLabel}</span></div>
+          <div class="outcome-badge ${outcomeClass}">${(e.outcome || 'unknown').replace(/_/g, ' ')}</div>
+          <div class="chevron">▸</div>
+        </div>
+        <div class="audit-detail">
+          <div class="field"><b>Amount:</b> ${formatMoney(e.amount || 0)}</div>
+          <div class="field"><b>AI Rationale:</b> ${e.classifier_rationale || e.reasoning || 'Executed standard recovery policy.'} <span class="compliance-pill">DPDP Compliant</span></div>
+          ${e.reasoning ? `<div class="field"><b>Decision Reasoning:</b> ${e.reasoning}</div>` : ''}
+          <div class="field"><b>Classifier Confidence:</b> ${e.classifier_confidence || 'High'}</div>
+          ${e.scheduled_time ? `<div class="field"><b>Scheduled:</b> ${new Date(e.scheduled_time).toLocaleString()}</div>` : ''}
+          ${e.tone ? `<div class="field"><b>Message Tone:</b> ${e.tone.replace(/_/g, ' ')}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('.audit-row').forEach(row => {
+    row.addEventListener('click', () => row.classList.toggle('open'));
+  });
+}
+
+function renderDashboard() {
+  document.getElementById('modeNote').textContent = DATA.is_mock
+    ? '● Mock Classification Mode'
+    : '● Gemini Flash Active';
+  document.getElementById('promiseHook').textContent = `Promises Tracked: ${DATA.combined.promises_tracked} | Honored: ${DATA.combined.promises_honored}`;
+  document.getElementById('stoppingRulesBadge').textContent = `Hard Stops Enforced: ${DATA.combined.stopping_rules_count}`;
+  document.getElementById('generatedAt').textContent = new Date(DATA.generated_at).toLocaleString();
+  
+  renderBreakdown('paymentBreakdown', DATA.payment_summary);
+  renderBreakdown('invoiceBreakdown', DATA.invoice_summary);
+  renderSummaryLine('paymentSub', DATA.payment_summary, 'transactions');
+  renderSummaryLine('invoiceSub', DATA.invoice_summary, 'invoices');
+  renderAuditList();
+}
+
+document.getElementById('filterType').addEventListener('change', renderAuditList);
+document.getElementById('filterOutcome').addEventListener('change', renderAuditList);
+document.getElementById('searchBox').addEventListener('input', renderAuditList);
+
+document.getElementById('otpLoginInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') verifyLoginOtp();
+});
+document.getElementById('otpRevealInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') verifyRevealOtp();
+});
+</script>
+</body>
+</html>
